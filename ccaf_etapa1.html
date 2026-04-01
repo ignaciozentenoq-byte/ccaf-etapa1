@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM CCAF — Etapa 1 · Neovectix</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:    #1A3A5C;
+    --blue2:   #2E6DA4;
+    --blue-l:  #D5E8F4;
+    --green:   #1A5C2E;
+    --green2:  #27AE60;
+    --green-l: #D5F4DF;
+    --amber:   #B7770D;
+    --amber-l: #FEF3CD;
+    --red:     #C0392B;
+    --red-l:   #FDEDEC;
+    --gray:    #5F5E5A;
+    --gray-l:  #F2F4F6;
+    --border:  #E0DED8;
+    --text:    #1C1C1C;
+    --text2:   #5A5A5A;
+    --text3:   #9A9896;
+    --bg:      #FAFAF8;
+    --white:   #FFFFFF;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────────── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand { font-size: 15px; font-weight: 600; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+  .header-badge { font-size: 11px; background: var(--green-l); color: var(--green); padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .header-badge.urgent { background: var(--red-l); color: var(--red); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* ── UNLOCK BUTTON ───────────────────────────────────────────── */
+  .unlock-btn {
+    font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--white); color: var(--text2);
+  }
+  .unlock-btn:hover { background: var(--gray-l); }
+
+  /* ── MODAL ───────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 16px; padding: 28px 24px;
+    width: 320px; box-shadow: 0 8px 40px rgba(0,0,0,.15);
+  }
+  .modal h3 { font-size: 16px; color: var(--blue); margin-bottom: 8px; }
+  .modal p  { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+  .modal input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px;
+    letter-spacing: 4px;
+  }
+  .modal input:focus { border-color: var(--blue2); }
+  .modal-err { font-size: 12px; color: var(--red); margin-bottom: 10px; display: none; }
+  .modal-btns { display: flex; gap: 8px; }
+  .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-confirm { background: var(--blue); color: white; }
+  .btn-cancel  { background: var(--gray-l); color: var(--text2); }
+
+  /* ── MAIN ────────────────────────────────────────────────────── */
+  .main { max-width: 600px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* ── HERO STATUS ─────────────────────────────────────────────── */
+  .hero {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px 20px 20px; margin-bottom: 20px;
+    text-align: center;
+  }
+  .hero-icon { font-size: 44px; margin-bottom: 10px; }
+  .hero-title { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .hero-sub   { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
+  .progress-wrap { background: var(--gray-l); border-radius: 20px; height: 8px; overflow: hidden; margin: 0 auto; max-width: 300px; }
+  .progress-fill { height: 8px; border-radius: 20px; background: var(--green2); transition: width .7s cubic-bezier(.4,0,.2,1); }
+  .progress-label { font-size: 12px; color: var(--text3); margin-top: 8px; }
+
+  /* ── PASOS CLIENTE ───────────────────────────────────────────── */
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .07em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .steps-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 4px 0; margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .step-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    transition: background .2s;
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-row.done  { background: #FAFFFC; }
+  .step-row.active { background: #FFFBF0; }
+
+  .step-dot-col { display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
+  .step-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid var(--border); background: var(--white);
+    transition: all .4s;
+  }
+  .step-dot.done   { background: var(--green2); border-color: var(--green2); }
+  .step-dot.active { background: var(--amber); border-color: var(--amber); }
+  .step-dot-line { width: 2px; flex: 1; min-height: 14px; background: var(--border); margin-top: 4px; }
+  .step-dot-line.done { background: var(--green2); }
+
+  .step-content { flex: 1; }
+  .step-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .step-name.done   { color: var(--green); }
+  .step-name.active { color: var(--amber); }
+  .step-name.pending { color: var(--text3); }
+  .step-note { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .step-note.pending { color: var(--text3); }
+  .step-hora { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .step-check { font-size: 13px; color: var(--green2); font-weight: 500; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .pulsing { animation: pulse 1.5s ease-in-out infinite; }
+
+  /* ── INFO BOX ────────────────────────────────────────────────── */
+  .info-box {
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;
+    font-size: 13px; line-height: 1.6; border-left: 4px solid;
+  }
+  .info-box.blue  { background: var(--blue-l); border-color: var(--blue2); color: var(--blue); }
+  .info-box.green { background: var(--green-l); border-color: var(--green2); color: var(--green); }
+  .info-box.amber { background: var(--amber-l); border-color: var(--amber); color: var(--amber); }
+
+  /* ── PANEL TÉCNICO ───────────────────────────────────────────── */
+  .tech-panel {
+    display: none; background: var(--white); border: 2px solid var(--blue2);
+    border-radius: 16px; padding: 20px; margin-bottom: 20px;
+  }
+  .tech-panel.open { display: block; }
+  .tech-title { font-size: 15px; font-weight: 600; color: var(--blue); margin-bottom: 4px; }
+  .tech-sub   { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+  .tech-current {
+    background: var(--blue-l); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .tech-current-label { font-size: 11px; color: var(--blue2); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+  .tech-current-step  { font-size: 14px; font-weight: 500; color: var(--blue); }
+  .tech-current-hora  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .tech-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-next {
+    padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; background: var(--blue); color: white;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn-next:hover:not(:disabled) { opacity: .88; }
+  .btn-next:active:not(:disabled) { transform: scale(.98); }
+  .btn-next:disabled { opacity: .4; cursor: default; }
+  .btn-undo {
+    padding: 11px 16px; border-radius: 10px; font-size: 13px;
+    cursor: pointer; background: var(--gray-l); border: 1px solid var(--border); color: var(--text2);
+  }
+  .btn-undo:hover:not(:disabled) { background: var(--border); }
+  .btn-undo:disabled { opacity: .4; cursor: default; }
+
+  /* ── LOG ─────────────────────────────────────────────────────── */
+  .log-wrap { margin-top: 14px; }
+  .log-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+  .log-box {
+    background: var(--gray-l); border-radius: 8px; padding: 10px 12px;
+    max-height: 100px; overflow-y: auto; font-family: monospace;
+  }
+  .log-line { font-size: 11px; color: var(--text2); line-height: 1.8; }
+  .log-time { color: var(--text3); }
+
+  /* ── FOOTER ──────────────────────────────────────────────────── */
+  .footer {
+    text-align: center; font-size: 11px; color: var(--text3);
+    padding: 16px; border-top: 1px solid var(--border);
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--white);
+  }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────────── */
+  @media(max-width: 480px) {
+    .hero-title { font-size: 18px; }
+    .header-brand span { display: none; }
+    .btn-next { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="#1A3A5C"/><rect x="4" y="4" width="5" height="5" rx="1" fill="white"/><rect x="11" y="4" width="5" height="5" rx="1" fill="white" opacity=".6"/><rect x="4" y="11" width="5" height="5" rx="1" fill="white" opacity=".6"/><rect x="11" y="11" width="5" height="5" rx="1" fill="white" opacity=".4"/></svg>
+    <span>Neovectix</span>
+    <span style="color:var(--text3);font-weight:400;">/ CRM CCAF</span>
+  </div>
+  <div class="header-right">
+    <span class="header-badge urgent" id="header-badge">En proceso</span>
+    <button class="unlock-btn" onclick="openModal()">Panel técnico</button>
+  </div>
+</div>
+
+<!-- MODAL CLAVE -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Acceso panel técnico</h3>
+    <p>Ingresa la clave para acceder al panel de control de Neovectix.</p>
+    <input type="password" id="pwd-input" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')checkPwd()">
+    <div class="modal-err" id="modal-err">Clave incorrecta. Inténtalo nuevamente.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="checkPwd()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO STATUS -->
+  <div class="hero" id="hero">
+    <div class="hero-icon" id="hero-icon">⏳</div>
+    <div class="hero-title" id="hero-title">Proceso por iniciar</div>
+    <div class="hero-sub" id="hero-sub">El equipo de Neovectix comenzará esta noche</div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="prog-label">0 de 8 pasos completados</div>
+  </div>
+
+  <!-- INFO BOX CLIENTE -->
+  <div class="info-box blue" id="info-cliente">
+    Esta página se actualiza automáticamente. No necesitas hacer nada, solo seguir el avance desde aquí.
+  </div>
+
+  <!-- PANEL TÉCNICO (oculto por defecto) -->
+  <div class="tech-panel" id="tech-panel">
+    <div class="tech-title">Panel de control — Neovectix</div>
+    <div class="tech-sub">Marca cada paso a medida que lo completas. El cliente verá el avance en tiempo real.</div>
+    <div class="tech-current" id="tech-current">
+      <div class="tech-current-label">Paso actual</div>
+      <div class="tech-current-step" id="tc-step">—</div>
+      <div class="tech-current-hora" id="tc-hora">—</div>
+    </div>
+    <div class="tech-btns">
+      <button class="btn-next" id="btn-next" onclick="advance()">Marcar como completado ✓</button>
+      <button class="btn-undo" id="btn-undo" onclick="undo()" disabled>Deshacer</button>
+    </div>
+    <div class="log-wrap">
+      <div class="log-label">Registro de actividad</div>
+      <div class="log-box" id="log-box"><div class="log-line" style="color:var(--text3)">Sin actividad registrada.</div></div>
+    </div>
+  </div>
+
+  <!-- PASOS CLIENTE -->
+  <div class="section-label">Estado del proceso</div>
+  <div class="steps-card" id="steps-card"></div>
+
+  <!-- INFO FINAL -->
+  <div class="info-box green" id="info-final" style="display:none">
+    El proceso de cierre fue completado exitosamente. Todos los accesos al sistema CRM CCAF han sido inhabilitados. Recibirás el reporte formal por correo.
+  </div>
+
+</div>
+
+<div class="footer" id="footer-bar">
+  Actualización automática cada 20 seg · <span id="last-update">—</span> · Neovectix © 2026
+</div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────────────────
+const PWD = "nvx2026"; // ← CAMBIA ESTA CLAVE ANTES DE COMPARTIR
+
+const STEPS = [
+  { hora:"22:00 hrs", name:"Lista de usuarios extraída del sistema",
+    note:"Nuestro equipo obtuvo el listado completo de todos los usuarios con acceso al sistema.",
+    cli_note_active:"Estamos preparando la lista de usuarios para enviártela.",
+    done_note:"✓ Lista generada y enviada al cliente." },
+  { hora:"22:30 hrs", name:"Listado enviado al cliente para validación",
+    note:"El listado fue enviado. Por favor revísalo y confirma si está completo.",
+    cli_note_active:"Revisa el correo que te enviamos y respóndenos antes de las 23:00 hrs.",
+    done_note:"✓ Cliente notificado." },
+  { hora:"23:00 hrs", name:"Confirmación del listado recibida",
+    note:"Recibimos tu confirmación. Procederemos con la inhabilitación.",
+    cli_note_active:"Esperando tu respuesta por correo o canal acordado.",
+    done_note:"✓ Listado validado por el cliente." },
+  { hora:"23:00 hrs", name:"Inhabilitando accesos — Metro",
+    note:"Estamos desactivando todas las cuentas de usuarios de Metro.",
+    cli_note_active:"Estamos cerrando los accesos de los usuarios de Metro.",
+    done_note:"✓ Todos los usuarios de Metro inhabilitados." },
+  { hora:"23:15 hrs", name:"Inhabilitando accesos — Caja Los Andes",
+    note:"Estamos desactivando todas las cuentas de usuarios de Caja Los Andes.",
+    cli_note_active:"Estamos cerrando los accesos de los usuarios de Caja Los Andes.",
+    done_note:"✓ Todos los usuarios de Caja Los Andes inhabilitados." },
+  { hora:"23:30 hrs", name:"Sesiones activas cerradas y acceso bloqueado",
+    note:"Se cerraron todas las sesiones abiertas y se bloqueó el acceso general al sistema.",
+    cli_note_active:"Cerrando sesiones abiertas y bloqueando el ingreso al sistema.",
+    done_note:"✓ Ninguna sesión activa. Acceso bloqueado por perfil." },
+  { hora:"00:01 hrs", name:"Verificación final del cierre",
+    note:"Realizamos pruebas internas confirmando que nadie puede ingresar al sistema.",
+    cli_note_active:"Verificando internamente que el acceso quedó efectivamente bloqueado.",
+    done_note:"✓ Prueba de acceso denegado exitosa." },
+  { hora:"00:15 hrs", name:"Reporte de confirmación enviado",
+    note:"El proceso está completo. Ya no es posible ingresar al sistema CRM CCAF.",
+    cli_note_active:"Preparando y enviando el reporte formal de cierre.",
+    done_note:"✓ Proceso completado. Reporte enviado al cliente." }
+];
+
+// ── ESTADO ────────────────────────────────────────────────────────────────
+let state = { current: 0, log: [], ts: null };
+let techOpen = false;
+const STORE_KEY = "ccaf_etapa1_v1";
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+function save() {
+  state.ts = Date.now();
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+}
+
+// ── ACCIONES ──────────────────────────────────────────────────────────────
+function advance() {
+  if (state.current >= STEPS.length) return;
+  const s = STEPS[state.current];
+  state.log.unshift({ time: nowStr(), msg: `Completado: "${s.name}"` });
+  if (state.log.length > 15) state.log.pop();
+  state.current++;
+  save(); render();
+}
+
+function undo() {
+  if (state.current <= 0) return;
+  state.current--;
+  const s = STEPS[state.current];
+  state.log.unshift({ time: nowStr(), msg: `Revertido: "${s.name}"` });
+  if (state.log.length > 15) state.log.pop();
+  save(); render();
+}
+
+function nowStr() {
+  return new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('pwd-input').focus();
+  document.getElementById('modal-err').style.display = 'none';
+  document.getElementById('pwd-input').value = '';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+function checkPwd() {
+  const v = document.getElementById('pwd-input').value;
+  if (v === PWD) {
+    closeModal();
+    techOpen = true;
+    document.getElementById('tech-panel').classList.add('open');
+    render();
+  } else {
+    document.getElementById('modal-err').style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render() {
+  const cur = state.current;
+  const total = STEPS.length;
+  const done = cur >= total;
+  const pct = Math.round((cur / total) * 100);
+
+  // Hero
+  const icons = ['⏳','📋','📨','✅','🔒','🔒','🚫','🔍','🎉'];
+  document.getElementById('hero-icon').textContent = done ? '🎉' : icons[cur] || '⏳';
+  document.getElementById('hero-title').textContent = done
+    ? '¡Proceso completado exitosamente!'
+    : cur === 0 ? 'El proceso comenzará pronto'
+    : STEPS[cur - 1]?.name || '—';
+  document.getElementById('hero-sub').textContent = done
+    ? 'Todos los accesos al sistema CRM CCAF han sido inhabilitados.'
+    : cur === 0 ? 'El equipo de Neovectix iniciará el proceso esta noche.'
+    : `Paso ${cur} de ${total} completado · En progreso...`;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${cur} de ${total} pasos completados`;
+
+  // Badge header
+  const badge = document.getElementById('header-badge');
+  badge.textContent = done ? 'Completado' : cur === 0 ? 'Por iniciar' : 'En proceso';
+  badge.className = 'header-badge' + (done ? ' ' : cur === 0 ? ' ' : ' urgent');
+
+  // Info cliente
+  document.getElementById('info-final').style.display = done ? 'block' : 'none';
+  document.getElementById('info-cliente').style.display = done ? 'none' : 'block';
+
+  // Panel técnico
+  if (techOpen) {
+    const tc = STEPS[cur];
+    document.getElementById('tc-step').textContent = done ? 'Todos los pasos completados' : tc?.name || '—';
+    document.getElementById('tc-hora').textContent = done ? '' : tc?.hora || '';
+    document.getElementById('btn-next').disabled = done;
+    document.getElementById('btn-next').textContent = done ? 'Etapa completada ✓' : `Completar: "${tc?.name}"`;
+    document.getElementById('btn-undo').disabled = cur === 0;
+
+    // Log
+    const logEl = document.getElementById('log-box');
+    if (state.log.length === 0) {
+      logEl.innerHTML = '<div class="log-line" style="color:var(--text3)">Sin actividad registrada.</div>';
+    } else {
+      logEl.innerHTML = state.log.map(l =>
+        `<div class="log-line"><span class="log-time">[${l.time}]</span> ${l.msg}</div>`
+      ).join('');
+    }
+  }
+
+  // Steps list
+  const container = document.getElementById('steps-card');
+  container.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const isDone   = i < cur;
+    const isActive = i === cur && !done;
+    const isPend   = i > cur;
+    const isLast   = i === STEPS.length - 1;
+
+    const row = document.createElement('div');
+    row.className = `step-row ${isDone ? 'done' : isActive ? 'active' : ''}`;
+
+    const dotClass = isDone ? 'done' : isActive ? 'active' : '';
+    const lineClass = isDone ? 'done' : '';
+    const nameClass = isDone ? 'done' : isActive ? 'active' : 'pending';
+    const noteClass = isPend ? 'pending' : '';
+
+    const noteText = isDone
+      ? s.done_note
+      : isActive
+        ? s.cli_note_active
+        : '—';
+
+    row.innerHTML = `
+      <div class="step-dot-col">
+        <div class="step-dot ${dotClass}${isActive ? ' pulsing' : ''}"></div>
+        ${!isLast ? `<div class="step-dot-line ${lineClass}"></div>` : ''}
+      </div>
+      <div class="step-content">
+        <div class="step-name ${nameClass}">${s.name}</div>
+        <div class="step-note ${noteClass}">${noteText}</div>
+        <div class="step-hora">${s.hora}</div>
+      </div>`;
+    container.appendChild(row);
+  });
+
+  // Last update
+  document.getElementById('last-update').textContent =
+    state.ts ? `Actualizado ${new Date(state.ts).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}` : 'Sin datos';
+}
+
+// ── AUTO-REFRESH ──────────────────────────────────────────────────────────
+setInterval(() => {
+  const prev = state.current;
+  load();
+  if (state.current !== prev) render();
+  document.getElementById('last-update').textContent =
+    `Actualizado ${new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}`;
+}, 20000);
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+load();
+render();
+</script>
+</body>
+</html>
